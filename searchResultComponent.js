@@ -1,7 +1,5 @@
-// SearchResultsComponent.js
-
 /**
- * Represents a custom search overlay component with search results.
+ * Custom element representing a search overlay with search results.
  * @class SearchOverlayComponent
  * @extends HTMLElement
  */
@@ -13,6 +11,9 @@ class SearchOverlayComponent extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+    this.searchInput = null;
+    this.searchButton = null;
+    this.searchResultsContainer = null;
   }
 
   /**
@@ -22,13 +23,29 @@ class SearchOverlayComponent extends HTMLElement {
    */
   connectedCallback() {
     this.render();
-    // Add event listeners for search input and button
-    this.shadowRoot
-      .querySelector("[data-search-input]")
-      .addEventListener("input", this.handleSearch.bind(this));
-    this.shadowRoot
-      .querySelector("[data-search-button]")
-      .addEventListener("click", this.handleSearch.bind(this));
+    this.cacheDOM();
+    this.attachEventListeners();
+  }
+
+  /**
+   * Caches DOM elements for later use.
+   * @method cacheDOM
+   */
+  cacheDOM() {
+    this.searchInput = this.shadowRoot.querySelector("[data-search-input]");
+    this.searchButton = this.shadowRoot.querySelector("[data-search-button]");
+    this.searchResultsContainer = this.shadowRoot.querySelector("[data-search-results]");
+  }
+
+  /**
+   * Attaches event listeners to DOM elements.
+   * @method attachEventListeners
+   */
+  attachEventListeners() {
+    if (this.searchInput && this.searchButton) {
+      this.searchInput.addEventListener("input", this.handleSearch.bind(this));
+      this.searchButton.addEventListener("click", this.handleSearch.bind(this));
+    }
   }
 
   /**
@@ -37,27 +54,26 @@ class SearchOverlayComponent extends HTMLElement {
    */
   render() {
     this.shadowRoot.innerHTML = `
-            <div class="search-overlay">
-                <input type="text" data-search-input placeholder="Search..." />
-                <button data-search-button>Search</button>
-                <div class="search-results" data-search-results></div>
-            </div>
-            <style>
-                /* CSS styles for the search overlay */
-                .search-overlay {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    padding: 1rem;
-                    background-color: rgba(var(--color-light), 1);
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                    z-index: 1000;
-                }
-                
-                /* Other CSS styles omitted for brevity */
-            </style>
-        `;
+      <div class="search-overlay">
+        <input type="text" data-search-input placeholder="Search..." />
+        <button data-search-button>Search</button>
+        <div class="search-results" data-search-results></div>
+      </div>
+      <style>
+        /* CSS styles for the search overlay */
+        .search-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          padding: 1rem;
+          background-color: rgba(var(--color-light), 1);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          z-index: 1000;
+        }
+        /* Other CSS styles omitted for brevity */
+      </style>
+    `;
   }
 
   /**
@@ -65,11 +81,8 @@ class SearchOverlayComponent extends HTMLElement {
    * @method handleSearch
    */
   handleSearch() {
-    const searchInput = this.shadowRoot.querySelector(
-      "[data-search-input]"
-    ).value;
-    // Implement search functionality here
-    const searchResults = this.searchBooks(searchInput);
+    const searchInputValue = this.searchInput.value;
+    const searchResults = this.searchBooks(searchInputValue);
     this.displaySearchResults(searchResults);
   }
 
@@ -80,9 +93,7 @@ class SearchOverlayComponent extends HTMLElement {
    * @returns {Array} An array of search results.
    */
   searchBooks(query) {
-    // convert the query to lowercase for case insensitive search
     const lowercaseQuery = query.toLowerCase();
-    // filter books based on the query
     const searchResults = books.filter((book) => {
       return (
         book.title.toLowerCase().includes(lowercaseQuery) ||
@@ -98,21 +109,15 @@ class SearchOverlayComponent extends HTMLElement {
    * @param {Array} results - An array of search results.
    */
   displaySearchResults(results) {
-    // Clear previous results
-    const searchResultsContainer = this.shadowRoot.querySelector(
-      "[data-search-results]"
-    );
-    searchResultsContainer.innerHTML = "";
-
-    // Render search results using SearchResultsComponent
-    const searchResultsComponent = document.createElement("search-results");
-    searchResultsComponent.setAttribute(
-      "data-results",
-      JSON.stringify(results)
-    );
-    searchResultsContainer.appendChild(searchResultsComponent);
+    if (this.searchResultsContainer) {
+      this.searchResultsContainer.innerHTML = "";
+      const searchResultsComponent = document.createElement("search-results");
+      searchResultsComponent.setAttribute("data-results", JSON.stringify(results));
+      this.searchResultsContainer.appendChild(searchResultsComponent);
+    }
   }
 }
 
 // Define the custom element
 customElements.define("search-overlay", SearchOverlayComponent);
+ 
